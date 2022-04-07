@@ -36,6 +36,8 @@ See later sections about obtaining these.
 
 ## Usage
 
+Install the distribution into a directory present in Tcl's `auto_path` variable.
+
 To use the `lg2` package, it must be loaded and then initialized with the
 path to the `libgit2` shared library. For example,
 
@@ -75,10 +77,17 @@ Mandatory arguments to long options are also mandatory for short options.
 ## Command reference
 
 There is no separate documentation for the `lg2` package commands as it (almost)
-directly maps the `libgit2` API and the
-[documentation](https://libgit2.org/libgit2/) for `libgit2` can be used as a
-reference. A few differences in usage are listed below. Also, the samples in the
-`examples` directory may be useful as a tutorial for command usage.
+directly maps the `libgit2` API into Tcl. The following `libgit2` links
+serve as documentation. **Make sure you use the libgit2 documentation for
+the appropriate version**.
+
+
+* [API reference](https://libgit2.org/libgit2/)
+* [Libgit2 snippets](https://libgit2.org/docs/guides/101-samples/)
+
+A few differences in useage from the `libgit2` C API are listed below. Also, the
+samples in the `examples` directory may be useful as a tutorial for command
+usage.
 
 * All commands are placed in the `lg2` namespace.
 
@@ -201,7 +210,7 @@ cd build/ubuntu
 On Windows, the `libgit2` DLL may be build with either the MinGW/GCC tool chain
 or Visual Studio.
 
-##### Building with MinGW-W64
+#### Building with MinGW-W64
 
 The corresponding steps for Windows given below are a little more involved
 because (a) dependencies need to be installed and (b) as a preference, the build
@@ -249,7 +258,7 @@ cd build/mingw32
 ./libgit2_tests
 ```
 
-##### Building with Visual Studio
+#### Building with Visual Studio
 
 Since there is no bundled `libssh2` with Visual Studio, download its 
 [source distribution](https://github.com/libssh2/libssh2/releases) and extract it
