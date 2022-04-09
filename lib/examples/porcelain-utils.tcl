@@ -6,7 +6,13 @@
 # See LICENSE file for details.
 
 # Load the git package into the ::git namespace
-package require lg2
+if {[catch {
+    package require lg2
+}]} {
+    
+    lappend auto_path [file join [file dirname [info script]] ..]
+    package require lg2
+}
 
 # The namespace kept changing during development so just make it a variable
 set GIT_NS ::lg2
@@ -286,7 +292,7 @@ proc print_signature {header sig {include_time 0}} {
         if {$name eq "" && $email eq ""} {
             return
         }
-        set line "$header $name <$email"
+        set line "$header $name <$email>"
         if {$include_time} {
             dict with when {
                 if {$offset < 0} {
@@ -827,7 +833,7 @@ proc getopt::help {body} {
         }
         app::error_note [format {%-*s %s} $tab $s1 $s2]
     }
-    app::abort 1
+    app::abort 0
 }
 
 namespace import getopt::*

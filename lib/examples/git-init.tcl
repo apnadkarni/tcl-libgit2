@@ -52,6 +52,12 @@ proc parse_init_options {arguments} {
             }
             option_set Template $arg
         }
+        --version {
+            # Print version and exit.
+            variable porcelain_version
+            puts $porcelain_version
+            exit 0
+        }
         arglist {
             # DIRECTORY
             set dir $arg

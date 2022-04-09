@@ -10,7 +10,15 @@
 proc parse_clone_options {arguments} {
 
     # NOTE: getopt uses comments below to generate help. Careful about changing them.
+    # Not using parse_options because the common options --work-tree and --git-dir
+    # are not applicable
     getopt::getopt opt arg $arguments {
+        --version {
+            # Print version and exit.
+            variable porcelain_version
+            puts $porcelain_version
+            exit 0
+        }
         arglist {
             # URL [DIRECTORY]
             set remain $arg

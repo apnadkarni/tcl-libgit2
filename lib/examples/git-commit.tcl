@@ -13,6 +13,12 @@ proc parse_commit_options {arguments} {
             # Use MESSAGE as commit message
             option_set Message $arg
         }
+        --version {
+            # Print version and exit.
+            variable porcelain_version
+            puts $porcelain_version
+            exit 0
+        }
         --git-dir:GITDIR {
             # Specify the path to the repository
             option_set GitDir $arg
