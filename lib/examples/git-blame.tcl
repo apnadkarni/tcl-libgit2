@@ -11,6 +11,15 @@ proc parse_blame_options {arguments} {
     parse_options opt arg $arguments {
         -L: {
             # Only process lines within RANGE (m,n)
+            lassign [split $arg ,] first last
+            if {$first ne ""} {
+                incr first 0
+                option_set FirstLine $first
+            }
+            if {$last ne ""} {
+                incr last 0
+                option_set LastLine $last
+            }
             option_set Range $arg
         }
         -C {
@@ -49,6 +58,12 @@ proc git-blame {arguments} {
 
     set opts [git_blame_options_init]
     dict set opts flags [option Flags GIT_BLAME_NORMAL]
+    if {[option? FirstLine first_line]} {
+        dict set opts min_line $first_line
+    }
+    if {[option? LastLine last_line]} {
+        dict set opts max_line $last_line
+    }
 
     set pRepo [open_repository]
     try {

@@ -175,12 +175,6 @@ proc matches_signature {re sig} {
 }
 
 proc print_commit {pCommit} {
-    puts "commit [git_oid_tostr_s [git_commit_id $pCommit]]"
-    set message [lg2_commit_message $pCommit]
-    if {[option ShowLogSize 0]} {
-        puts "log size [string length $message]"
-    }
-
     # Parents only shown if more than one
     set nparents [git_commit_parentcount $pCommit]
     if {$nparents > 1} {
@@ -188,13 +182,21 @@ proc print_commit {pCommit} {
             git_oid_tostr oid 8 [git_commit_parent_id $pCommit $i]
             lappend parents $oid
         }
-        puts "Merge: [join $parents { }]"
+        append output "Merge: [join $parents { }]\n"
     }
     set sig [git_commit_author $pCommit]
-    print_signature Author: $sig
-    print_git_time Date: [dict get $sig when]
+    append output [format_signature Author: $sig] \n
+    append output [format_git_time "Date:  " [dict get $sig when]] \n
+    set message [lg2_commit_message $pCommit]
+    if {$message ne ""} {
+        append output "\n    $message"
+    }
 
-    puts "\n    $message"
+    puts "commit [git_oid_tostr_s [git_commit_id $pCommit]]"
+    if {[option ShowLogSize 0]} {
+        puts "log size [string length $output]"
+    }
+    puts $output
 }
 
 proc print_patch {pRepo pCommit diffopts} {

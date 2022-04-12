@@ -554,10 +554,7 @@ namespace eval lg2::test {
         list [compare_logs $parsed_log [parse_log $glog]] [llength $parsed_log]
     } -result {{} 6}
 
-    # Disabled because not clear what git reports as log-size
-    test log-log-size-0 "log log-size" -constraint {
-        disabled
-    } -setup {
+    test log-log-size-0 "log log-size" -setup {
         set workdir [setup_ro_repo]
         pushd $workdir
     } -cleanup {
@@ -568,6 +565,30 @@ namespace eval lg2::test {
         set parsed_log [parse_log $plog]
         list [compare_logs $parsed_log [parse_log $glog]] [llength $parsed_log]
     } -result {{} 7}
+
+    ### blame
+
+    test_help blame
+    test_version blame
+
+    test git-blame-0 "blame" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        porcelain_exec blame branch_file.txt
+    } -result  "c47800c7 (Scott Chacon <schacon@gmail.com>   1) hi\na65fedf3 (Scott Chacon <schacon@gmail.com>   2) bye!"
+
+    test git-blame-L-0 "blame -L" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        porcelain_exec blame -L 1,1 branch_file.txt
+    } -result  "c47800c7 (Scott Chacon <schacon@gmail.com>   1) hi"
+
 }
 
 ::tcltest::cleanupTests

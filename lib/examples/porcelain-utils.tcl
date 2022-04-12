@@ -268,7 +268,7 @@ proc resolve_treeish {pRepo treeish} {
     }
 }
 
-proc print_git_time {header t} {
+proc format_git_time {header t} {
     dict with t {
         incr time [expr {60 * $offset}]; # Offset is in minutes
         if {$offset < 0} {
@@ -283,14 +283,20 @@ proc print_git_time {header t} {
 
 
     set tz "$sign[format %02d $hours][format %02d $minutes]"
-    set timestr [clock format $time -format "%a %b %d %T %Y" -gmt 1]
-    puts "$header $timestr $tz"
+    # Do not want leading 0 (or pad space) for single digit dates
+    set day_of_month [string trimleft [clock format $time -format %d -gmt 1] 0]
+    set timestr [clock format $time -format "%a %b $day_of_month %T %Y" -gmt 1]
+    return "$header $timestr $tz"
 }
 
-proc print_signature {header sig {include_time 0}} {
+proc print_git_time {header t} {
+    puts [format_git_time $header $t]
+}
+
+proc format_signature {header sig {include_time 0}} {
     dict with sig {
         if {$name eq "" && $email eq ""} {
-            return
+            return ""
         }
         set line "$header $name <$email>"
         if {$include_time} {
@@ -307,7 +313,14 @@ proc print_signature {header sig {include_time 0}} {
 
             append line " $time $sign[format %02d $hours][format %02d $minutes]"
         }
-        puts $line
+        return $line
+    }
+}
+
+proc print_signature {header sig {include_time 0}} {
+    set s [format_signature $header $sig $include_time]
+    if {[string length $s]} {
+        puts $s
     }
 }
 
