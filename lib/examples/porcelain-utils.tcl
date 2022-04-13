@@ -342,11 +342,13 @@ variable diff_line_color_seq [list \
 proc print_diff_line {delta hunk line payload} {
     variable diff_line_prefixes
     variable diff_line_color_seq
+    upvar 1 color_state color_state
+    upvar 1 cb_file_header cb_file_header
 
     set origin [dict get $line origin]
 
+    set output ""
     # See if color enabled in caller
-    upvar 1 color_state color_state
     if {[info exists color_state]} {
         # Coloring enabled
         if {[dict exists $diff_line_color_seq $origin]} {
@@ -357,9 +359,9 @@ proc print_diff_line {delta hunk line payload} {
         if {$color ne $color_state} {
             if {$color eq "\033\[1m" || $color_state eq "\033\[1m"} {
                 # State was Bold. Reset
-                puts -nonewline "\033\[m"
+                append output "\033\[m"
             }
-            puts -nonewline $color
+            append output $color
             set color_state $color
         }
     }
@@ -371,7 +373,25 @@ proc print_diff_line {delta hunk line payload} {
             append output [dict get $diff_line_prefixes $origin]
         }
         append output [encoding convertto utf-8 [::cffi::memory tobinary! $contentP $len]]
-        puts -nonewline $output
+        # The following is a workaround for libgit2 (as of 1.4.2) calling back
+        # for the file headers even if no differences are reported when
+        # --ignore-space-at-eol is specified. We stick away the file header
+        # output and only print it later if actual diffs are also reported.
+        # For --name-only and --name-status, we output it right away to match
+        # git behaviour. This should really be fixed in libgit2
+        if {$origin eq "GIT_DIFF_LINE_FILE_HDR"} {
+            if {[option Format GIT_DIFF_FORMAT_PATCH] eq "GIT_DIFF_FORMAT_PATCH"} {
+                set cb_file_header $output
+            } else {
+                puts -nonewline $output
+            }
+        } else {
+            if {[info exists cb_file_header] && $cb_file_header ne ""} {
+                puts -nonewline $cb_file_header
+                set cb_file_header ""
+            }
+            puts -nonewline $output
+        }
     }
 
     return 0

@@ -20,11 +20,11 @@ proc parse_diff_options {arguments} {
         }
         --cached {
             # Show changes staged relative to a commit
-            option_set_once Inputs $opt
+            option_set_once Inputs $opt {--cached --no-index}
         }
         --no-index {
             # Compare two paths on the file system.
-            option_set_once Inputs $opt
+            option_set_once Inputs $opt {--cached --no-index}
         }
         --name-only {
             # Only show names of changed files
@@ -155,7 +155,7 @@ i           dict with [${GIT_NS}::git_buf fromnative $pBuf] {}; # ptr, asize, si
         }
         --dst-prefix:PREFIX {
             # Use PREFIX instead of b/ as destination prefix
-            dict set DiffOptions old_prefix $arg
+            dict set DiffOptions new_prefix $arg
         }
         arglist {
             # [ARGS..]
@@ -201,7 +201,7 @@ proc diff_files {apath bpath} {
         # Allocate a buffer descriptor
         set pBuf [${::GIT_NS}::git_buf new]
         git_patch_to_buf $pBuf $pPatch
-        lassign [${::GIT_NS}::git_buf fields $pBuf {ptr size}] ptr size
+        lassign [${::GIT_NS}::git_buf getnativefields $pBuf {ptr size}] ptr size
         puts [::cffi::memory tostring! $ptr]
         ::cffi::pointer safe $ptr; # Mark as safe for git_diff_from_buf benefit
         return [git_diff_from_buffer $ptr $size]
@@ -230,7 +230,7 @@ proc print_stats {pDiff} {
     try {
         set pBuf [${::GIT_NS}::git_buf new]
         git_diff_stats_to_buf $pBuf $pStats $DiffStatsFormat 80
-        lassign [${::GIT_NS}::git_buf fields $pBuf {ptr size}] ptr size
+        lassign [${::GIT_NS}::git_buf getnativefields $pBuf {ptr size}] ptr size
         if {![::cffi::pointer isnull $ptr]} {
             # ptr is null terminated so we really do not need to use size
             puts [::cffi::memory tostring! $ptr]
@@ -245,8 +245,11 @@ proc print_stats {pDiff} {
 proc git-diff {arguments} {
     variable DiffOptions
     variable DiffFindOptions
+    variable DiffStatsFormat
 
     set DiffOptions [git_diff_options_init]
+    dict set DiffOptions old_prefix a
+    dict set DiffOptions new_prefix b
     set DiffFindOptions [git_diff_find_options_init]
 
     set pPathSpec NULL
@@ -324,8 +327,11 @@ proc git-diff {arguments} {
             git_diff_find_similar $pDiff $DiffFindOptions
         }
 
-        print_stats $pDiff
-        print_diffs $pDiff [option Format GIT_DIFF_FORMAT_PATCH]
+        if {[info exists DiffStatsFormat] && [llength $DiffStatsFormat] != 0} {
+            print_stats $pDiff
+        } else {
+            print_diffs $pDiff [option Format GIT_DIFF_FORMAT_PATCH]
+        }
 
     } finally {
         # Note - ok for pointers to be NULL

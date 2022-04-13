@@ -1,11 +1,13 @@
 # Basic sanity check tests using the porcelain example programs
 
 package require tcltest
+package require textutil::string
 
 namespace eval lg2::test {
     namespace path ::tcltest
 
     variable testDir [file normalize [file dirname [info script]]]
+    variable testRepoPath [file join $testDir resources testrepo.git]
 
     variable oid_re {[[:xdigit:]]{40}}
 }
@@ -65,16 +67,23 @@ namespace eval lg2::test {
         return $dir
     }
     proc setup_ro_repo {} {
+        variable testRepoPath
         set dir [makeDirectory lg2-temp-testrepo]
-        file delete -force $dir
-        git_exec . clone resources/testrepo.git $dir 2>@1
+        if {[catch {
+            file delete -force $dir
+        } result]} {
+            puts "ERROR: $result"
+            file delete -force $dir
+        }
+        git_exec . clone $testRepoPath $dir 2>@1
         proc setup_ro_repo {} "return $dir"
         return $dir
     }
     proc setup_rw_repo {name} {
+        variable testRepoPath
         set dir [makeDirectory $name]
         file delete -force $dir
-        git_exec . clone resources/testrepo.git $dir 2>@1
+        git_exec . clone $testRepoPath $dir 2>@1
         return $dir
     }
     proc test_help {porcelain_name} {
@@ -89,6 +98,19 @@ namespace eval lg2::test {
             -result 0.1a0
     }
 
+    proc compare_with_git {workdir args} {
+        set lg2 [string trim [porcelain_exec {*}$args]]
+        set git [string trim [git_exec $workdir {*}$args]]
+        return [string equal $lg2 $git]
+    }
+    proc test_with_git {label args} {
+        test $label $args -setup {
+            set workdir [setup_ro_repo]
+            pushd $workdir
+        } -cleanup {
+            popd
+        } -body "compare_with_git \$workdir $args" -result 1
+    }
     ### init
 
     test_version init
@@ -300,12 +322,12 @@ namespace eval lg2::test {
     } -cleanup {
         popd
     } -body {
-        porcelain_exec tag lg2-annotated-tag
+        porcelain_exec tag --annotate --message "annotated tag" lg2-annotated-tag
         git_exec $workdir cat-file -t lg2-annotated-tag
     } -result "tag" -match regexp
 
     test tag-delete-0 "Delete tags" -setup {
-        set workdir [setup_ro_repo]
+        set workdir [setup_rw_repo tag-delete-0]
         pushd $workdir
     } -cleanup {
         popd
@@ -589,6 +611,287 @@ namespace eval lg2::test {
         porcelain_exec blame -L 1,1 branch_file.txt
     } -result  "c47800c7 (Scott Chacon <schacon@gmail.com>   1) hi"
 
+    ### cat-file
+
+    test_help cat-file
+    test_version cat-file
+
+    test_with_git cat-file-p-0 cat-file -p a65fedf3
+    test cat-file-p-1 "cat-file -p test" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        string trim [porcelain_exec cat-file -p test]
+    } -result "object 7b4384978d2493e851f9cca7858815fac9b10980\ntype tag\ntag test\ntagger Vicent Marti <tanoku@gmail.com>\n\nThis is a test tag"
+    test_with_git cat-file-t-0 cat-file -t a65fedf3
+    test_with_git cat-file-t-1 cat-file -t test
+    test_with_git cat-file-s-0 cat-file -s a65fedf3
+    test_with_git cat-file-s-1 cat-file -s test
+    test_with_git cat-file-e-0 cat-file -e a65fedf3
+    test_with_git cat-file-e-1 cat-file -e test
+
+    test_with_git cat-file-commit-0 cat-file commit test
+    test_with_git cat-file-blob-0 cat-file blob annotated_tag_to_blob
+    test cat-file-tag-0 "cat-file tag test" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        string trim [porcelain_exec cat-file tag test]
+    } -result "object 7b4384978d2493e851f9cca7858815fac9b10980\ntype tag\ntag test\ntagger Vicent Marti <tanoku@gmail.com>\n\nThis is a test tag"
+    test cat-file-tree-0 "cat-file tree test" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        string trim [porcelain_exec cat-file tree test]
+    } -result "100644 blob 0266163a49e280c4f5ed1e08facd36a2bd716bcf\treadme.txt"
+
+    ### config
+    test_help config
+    test_version config
+
+    test_with_git config-list-0 config --list
+    test_with_git config-get-0 config color.diff
+    test config-set-0 "config set" -setup {
+        set workdir [setup_rw_repo config-set-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        porcelain_exec config lg2.test foo
+        git_exec $workdir config lg2.test
+    } -result "foo"
+
+    ### describe
+    test_help describe
+    test_version describe
+
+    test_with_git describe-0 describe test
+    test_with_git describe-1 describe --all 9fd738e8f7
+    # This test is commented because of libgit2 bug #6272
+    #    test_with_git describe-2 describe --all point_to_blob
+    test_with_git describe-3 describe a65fedf3
+
+    test_with_git describe-long-0 describe --long
+    test_with_git describe-long-0 describe --long test
+    test_with_git describe-abbrev-0 describe --abbrev=10 --long test
+
+    ### dump-index
+    test dump-index-0 "dump-index" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        string trim [porcelain_exec dump-index]
+    } -result "3697d64be941a53d4ae8f6a271e4e3fa56b022cc branch_file.txt\t10\na71586c1dfe8a71c6cbf6c129f404c5642ff31bd new.txt\t13\na8233120f6ad708f843d861ce2b7228ec4e3dec6 README\t11"
+
+    test dump-index-verbose-0 "dump-index --verbose" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        string trim [porcelain_exec dump-index --verbose]
+    } -result "^File Path: branch_file.txt.*Blob SHA: a71586c1dfe8a71c6cbf6c129f404c5642ff31bd.*File Size: 11 bytes" -match regexp
+
+    ### for-each-ref
+
+    test_help for-each-ref
+    test_version for-each-ref
+
+    test for-each-ref-0 "for-each-ref" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        set pref [lsort -index 2 [split [string trim [porcelain_exec for-each-ref]] \n]]
+        set gref [lsort -index 2 [split [string trim [git_exec $workdir for-each-ref]] \n]]
+        string equal $pref $gref
+    } -result 1
+
+    test for-each-ref-1 "for-each-ref pattern" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        # Unlike git, which tacks on a *, our version needs explicit *
+        set pref [lsort -index 2 [split [string trim [porcelain_exec for-each-ref refs/tags*]] \n]]
+        set gref [lsort -index 2 [split [string trim [git_exec $workdir for-each-ref refs/tags]] \n]]
+        list [llength $pref] [string equal $pref $gref]
+    } -result {7 1}
+
+    test for-each-ref-count-0 "for-each-ref --count" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        set pref [lsort -index 2 [split [string trim [porcelain_exec for-each-ref --count 5]] \n]]
+        set gref [lsort -index 2 [split [string trim [git_exec $workdir for-each-ref --count 5]] \n]]
+        list [llength $pref] [string equal $pref $gref]
+    } -result {5 1}
+
+    ### ls-files
+    test_help ls-files
+    test_version ls-files
+
+    test ls-files-0 "ls-files" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        porcelain_exec ls-files
+    } -result "branch_file.txt\nnew.txt\nREADME"
+
+    ### ls-remote
+    test_help ls-remote
+    test_version ls-remote
+
+    test ls-remote-0 "ls-remote" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        # Note: cannot diff with git because that includes peeled versions of
+        # non-tag refs while libgit2 does not. See libgit2 issue #6275
+        porcelain_exec ls-remote
+    } -result {^a65fe.*HEAD.*refs/tags/wrapped_tag\^\{\}$} -match regexp
+
+    test ls-remote-1 "ls-remote origin" -setup {
+        set workdir [setup_ro_repo]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        # Note: cannot diff with git because that includes peeled versions of
+        # non-tag refs while libgit2 does not. See libgit2 issue #6275
+        porcelain_exec ls-remote origin
+    } -result {^a65fe.*HEAD.*refs/tags/wrapped_tag\^\{\}$} -match regexp
+
+    ### rev-parse
+    test_help rev-parse
+    test_version rev-parse
+
+    test_with_git rev-parse-0 rev-parse test
+
+    ### diff
+    test_help diff
+    test_version diff
+
+    test diff-0 "diff" -setup {
+        set workdir [setup_rw_repo diff-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "Hi there" README $workdir
+        porcelain_exec diff --no-color
+    } -result "diff --git a/README b/README
+index a823312..6530b63 100644
+--- a/README
++++ b/README
+@@ -1 +1 @@
+-hey there
++Hi there"
+
+    test diff-name-only-0 "diff --name-only" -setup {
+        set workdir [setup_rw_repo diff-name-only-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "Hi there" README $workdir
+        porcelain_exec diff --name-only --no-color
+    } -result "README"
+
+    test diff-stat-0 "diff --stat" -setup {
+        set workdir [setup_rw_repo diff-stat-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "Hi there" README $workdir
+        porcelain_exec diff --stat --no-color
+    } -result " README | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)\n"
+
+    test diff-numstat-0 "diff --numstat" -setup {
+        set workdir [setup_rw_repo diff-stat-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "Hi there" README $workdir
+        porcelain_exec diff --numstat --no-color
+    } -result "1       1       README\n"
+
+    test diff-ignore-space-at-eol-0 "diff ignore-space-at-eol" -setup {
+        set workdir [setup_rw_repo diff-stat-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "hey there    " README $workdir
+        porcelain_exec diff --no-color
+    } -result "diff --git a/README b/README
+index a823312..4130f34 100644
+--- a/README
++++ b/README
+@@ -1 +1 @@
+-hey there
++hey there    "
+
+    test diff-ignore-space-at-eol-1 "diff ignore-space-at-eol" -setup {
+        set workdir [setup_rw_repo diff-stat-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "  my new file" new.txt $workdir
+        makeFile "hey there    " README $workdir
+        porcelain_exec diff --ignore-space-at-eol --no-color
+    } -result "diff --git a/new.txt b/new.txt
+index a71586c..fa8480e 100644
+--- a/new.txt
++++ b/new.txt
+@@ -1 +1 @@
+-my new file
++  my new file"
+
+    test diff-ignore-all-space-0 "diff ignore-space-at-eol" -setup {
+        set workdir [setup_rw_repo diff-stat-0]
+        pushd $workdir
+    } -cleanup {
+        popd
+    } -body {
+        makeFile "Hullo\nbye!" branch_file.txt $workdir
+        makeFile "  my new file" new.txt $workdir
+        makeFile "hey there    " README $workdir
+        porcelain_exec diff --ignore-all-space --no-color
+    } -result "diff --git a/branch_file.txt b/branch_file.txt
+index 3697d64..23dc6c9 100644
+--- a/branch_file.txt
++++ b/branch_file.txt
+@@ -1,2 +1,2 @@
+-hi
++Hullo
+ bye!"
+
+    ### fetch
+
+    ### push
+
+    ### checkout
 }
 
 ::tcltest::cleanupTests

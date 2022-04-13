@@ -43,7 +43,7 @@
     GIT_DIFF_MINIMAL                         0x20000000
     GIT_DIFF_SHOW_BINARY                     0x40000000
 }
-::cffi::alias define GIT_DIFF_OPTION_T {int {enum git_diff_option_t} bitmask}
+::cffi::alias define GIT_DIFF_OPTION_T {uint32_t {enum git_diff_option_t} bitmask}
 
 
 ::cffi::enum flags git_diff_flag_t {
@@ -138,7 +138,7 @@
 
 ::cffi::Struct create git_diff_options {
     version            int
-    flags              uint32_t
+    flags              GIT_DIFF_OPTION_T
     ignore_submodules  GIT_SUBMODULE_IGNORE_T
     pathspec           struct.lg2_strarray
     notify_cb          {pointer.git_diff_notify_cb    nullok {default NULL}}

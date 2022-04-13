@@ -40,7 +40,7 @@ proc show_ref {pRepo pRef} {
         set oidstr [git_oid_tostr_s $oid]
         set pObj [git_object_lookup $pRepo $oid GIT_OBJECT_ANY]
         set type [git_object_type2string [git_object_type $pObj]]
-        puts [format "%s %-6s\t%s" $oidstr $type [git_reference_name $pRef]]
+        puts [format "%s %s\t%s" $oidstr $type [git_reference_name $pRef]]
     } finally {
         git_object_free $pObj
     }

@@ -12,11 +12,11 @@ proc parse_cat-file_options {arguments} {
         -stp {
             # Show size / type / prettified output of object instead
             # of raw content
-            option_set_once Action $opt
+            option_set_once Action $opt "-s -t -p -e"
         }
         -e {
             # Check existence and validity of object without printing
-            option_set_once Action $opt
+            option_set_once Action $opt "-s -t -p -e"
         }
         -v {
             # Set verbose output mode
