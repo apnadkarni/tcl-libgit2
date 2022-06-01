@@ -2,8 +2,14 @@
 
 The `lg2` package is a binding to the [libgit2](https://libgit2.org) library. It
 is only intended as a demonstration of using CFFI to wrap a fairly substantial
-shared library (more than 800 functions) and thus lacks a test suite. Use in
+shared library (more than 800 functions) and thus lacks a comprehensive test suite
+though some basic sanity checks are in the tests directory. Use in
 production will require client applications to write their own.
+
+The source repository is at https://github.com/apnadkarni/tcl-libgit2.
+
+The package distribution is available from
+https://sourceforge.net/projects/magicsplat/files/lg2/.
 
 ## Porcelain and plumbing
 
@@ -16,12 +22,12 @@ which implement the low level operations.
 by the user in daily usage and are built on top of the plumbing commands.
 
 The `libgit2` API implements the equivalent of the plumbing commands and
-accordingly so does the `lg2` wrapper. Be warned that using the package requires
+accordingly so does the `lg2` package. Be warned that using the package requires
 understanding the `libgit2` API which in turn requires understanding git and its
 internal structures. The `examples` directory contains implementations of
-simpler versions of the high level `git` commands that illustrate the use of the
-plumbing command and which can be used as a starting point for more complete
-implementations.
+simpler versions of the high level `git` porcelain commands that illustrate the
+use of the plumbing commands and can be used as a starting point for more
+complete implementations.
 
 ## Prerequisites
 
@@ -46,10 +52,11 @@ package require lg2
 lg2::lg2_init /lib/x86_64-linux-gnu/libgit2.so
 ```
 
-If no path is supplied to `lg2_init` it will try to locate `git2.dll` on
-Windows or `libgit2.so` on other platforms under architecture-specific 
-directories under the package directory. If not found there, it will just attempt
-to load using the unqualified shared library name.
+If no path is supplied to `lg2_init` it will try to locate `libgit2.dll` or
+`git2.dll` on Windows and `libgit2.so` on other platforms under
+architecture-specific directories under the package directory. If not found
+there, it will just attempt to load using the unqualified shared library name
+assuming the library is present in a standard system directory.
 
 The scripts in the `examples` directory are standalone scripts that
 mimic the porcelain git commands. All support the `--help` option to 
@@ -119,17 +126,17 @@ the same name. Now a pointer to a `git_signature` may come either from
 the former is freed by a call to the `libgit2` (wrapped) function
 `git_signature_free` while the latter must be freed through the
 `git_signature free` (note one is a wrapped function, other is a call to
-the `free` method for the CFFI `git_signature` struct command instance.
+the `free` method for the CFFI `git_signature` struct command instance).
 
 * `libgit2` uses utf-8 string encoding by default. Correspondingly, `lg2`
 defines the `STRING` CFFI alias that is used by most declarations. Some commands
-allow for strings in arbitrary encodings. These have to be passed as
-encoded binary strings with the encoding name in a separate parameter.
-The encoding names are from IANA, not those used by Tcl's `encoding` command.
-The package therefore provides some utility commands `lg2_encoding convertto` and
-`lg2_encoding convertfrom` to help with such conversions. They work like
-Tcl's `encoding` equivalents except they accept the encoding names used
-by `libgit2` instead of Tcl encoding names.
+allow for strings in arbitrary encodings. These have to be passed as encoded
+binary strings with the encoding name in a separate parameter. The encoding
+names are from IANA, not those used by Tcl's `encoding` command. The package
+therefore provides some utility commands `lg2_encoding convertto` and
+`lg2_encoding convertfrom` to help with such conversions. They work like Tcl's
+`encoding` equivalents except they accept the encoding names used by `libgit2`
+instead of Tcl encoding names.
 
 * One note to keep in mind with `libgit2` (this is independent of the `lg2` package)
 is that many functions that take file paths as arguments expect `/` to be used as
@@ -147,11 +154,14 @@ see the file `BUILD.md` in the distribution.
 
 ## Obtaining the `libgit2` library
 
+The `lg2` distribution includes `libgit2` DLL's for Windows platforms. See
+instructions below to build the DLL's yourself.
+
 On most Unix/Linux systems `libgit2` can be installed using the system's package
 manager. However, system provided `libgit2` packages are often out of date.
 Currently the `lg2` package supports `libgit2` versions 1.3 and 1.4. If the
-system package manager does not include `libgit2` or includes a different version,
-some hints about building it are given later.
+system package manager does not include `libgit2` or includes a different
+version, see build instruction below.
 
 **Important:** Only use supported **release* versions of `libgit2` as it does
 not guarantee ABI compatibility even between minor releases. Moreover, binaries built
@@ -284,3 +294,14 @@ If your directory is not on the C: drive, you may see a few test failures.
 The 32-bit build is similar except that you need to run the commands from a Visual
 Studio 32-bit prompt and the `-A` option should be left out or take the value 
 `Win32` instead of `x64`.
+
+## Support
+
+I can only (attempt to) answer questions related to the use of CFFI in this package.
+For questions about `libgit2` itself, see one of
+
+* The [libgit2 documentation](https://libgit2.org)
+
+* The [github discussions](https://github.com/libgit2/libgit2/discussions) section
+
+* The [stackoverflow group](https://stackoverflow.com/questions/tagged/libgit2)
