@@ -1,4 +1,4 @@
-#  `lg2` - Tcl/CFFI binding to libgit2
+# `lg2` - Tcl/CFFI binding to libgit2
 
 The `lg2` package is a binding to the [libgit2](https://libgit2.org) library. It
 is only intended as a demonstration of using CFFI to wrap a fairly substantial
