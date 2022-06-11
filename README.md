@@ -302,6 +302,13 @@ For questions about `libgit2` itself, see one of
 
 * The [libgit2 documentation](https://libgit2.org)
 
+* The [Git Internals](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects)
+chapter from the official free online [Pro Git](https://git-scm.com/book/en/v2) book.
+
+* The Git man pages, particularly those in sections 5 and 7, and
+[gitcore-tutorial](https://man7.org/linux/man-pages/man7/gitcore-tutorial.7.html)
+a tutorial about using the plumbing commands.
+
 * The [github discussions](https://github.com/libgit2/libgit2/discussions) section
 
 * The [stackoverflow group](https://stackoverflow.com/questions/tagged/libgit2)
