@@ -369,3 +369,9 @@ if {[lg2_abi_vsatisfies 1.4]} {
     }
 }
 
+if {[lg2_abi_vsatisfies 1.5]} {
+    libgit2 function git_remote_connect_options_dispose void {
+        opts {struct.git_remote_connect_options byref}
+    }
+}
+

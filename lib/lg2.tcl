@@ -7,7 +7,7 @@
 namespace eval ::lg2 {
     variable packageDirectory [file dirname [file normalize [info script]]]
     variable libgit2Path
-    variable libgit2SupportedVersions {1.3 1.4}
+    variable libgit2SupportedVersions {1.3 1.4 1.5}
 
     # The order of loading these files is important!!!
     # Later files depend on earlier ones, just like the C headers
@@ -152,6 +152,13 @@ namespace eval ::lg2 {
         proc lg2_abi_vsatisfies {args} {package vsatisfies [lg2_abi_version] {*}$args}
         if {![lg2_abi_vsatisfies {*}$libgit2SupportedVersions]} {
             error "libgit2 version $major.$minor.$rev is not supported. This package requires one of [join $libgit2SupportedVersions {, }]. Note libgit2 does not guarantee ABI compatibility between minor releases."
+        }
+        if {[lg2_abi_vsatisfies 1.5]} {
+            libgit2 function git_libgit2_prerelease {STRING nullifempty} {}
+            set prerel [git_libgit2_prerelease]
+            if {$prerel ne ""} {
+                error "libgit2 is a prerelease ($prerel). This package requires a released version due to ABI constraints."
+            }
         }
 
         # Remaining scripts
