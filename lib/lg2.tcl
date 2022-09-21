@@ -154,7 +154,7 @@ namespace eval ::lg2 {
             error "libgit2 version $major.$minor.$rev is not supported. This package requires one of [join $libgit2SupportedVersions {, }]. Note libgit2 does not guarantee ABI compatibility between minor releases."
         }
         if {[lg2_abi_vsatisfies 1.5]} {
-            libgit2 function git_libgit2_prerelease {STRING nullifempty} {}
+            libgit2 function git_libgit2_prerelease {STRING nullok} {}
             set prerel [git_libgit2_prerelease]
             if {$prerel ne ""} {
                 error "libgit2 is a prerelease ($prerel). This package requires a released version due to ABI constraints."
@@ -171,4 +171,4 @@ namespace eval ::lg2 {
         return $ret
     }
 }
-package provide lg2 0.1
+package provide lg2 0.2

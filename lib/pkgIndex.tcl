@@ -2,4 +2,4 @@
 # All rights reserved.
 # See LICENSE file for details.
 
-package ifneeded lg2 0.1 [list source [file join $dir lg2.tcl]]
+package ifneeded lg2 0.2 [list source [file join $dir lg2.tcl]]

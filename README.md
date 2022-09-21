@@ -33,10 +33,11 @@ complete implementations.
 
 The `lg2` package has two prerequisites.
 
-* The Tcl [`cffi`](https://cffi.magicsplat.com) extension, version 1.0b5 or
+* The Tcl [`cffi`](https://cffi.magicsplat.com) extension, version 1.2.0 or
 later, must be present somewhere in the Tcl package search path.
 
-* The [`libgit2`](https://libgit2.org] shared library, either v1.3 or v1.4.
+* The [`libgit2`](https://libgit2.org) shared library. Supported versions
+are 1.3.x, 1.4.x and 1.5.x.
 
 See later sections about obtaining these.
 

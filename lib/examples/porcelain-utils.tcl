@@ -18,7 +18,7 @@ if {[catch {
 set GIT_NS ::lg2
 namespace path [linsert [namespace path] 0 ${GIT_NS}]
 
-variable porcelain_version 0.1a0
+variable porcelain_version 0.2
 
 lg2_init
 

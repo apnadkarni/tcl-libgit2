@@ -95,7 +95,7 @@ namespace eval lg2::test {
     proc test_version {porcelain_name} {
         test ${porcelain_name}-version-0 "$porcelain_name --version" \
             -body [list porcelain_exec $porcelain_name --version] \
-            -result 0.1a0
+            -result 0.2
     }
 
     proc compare_with_git {workdir args} {
@@ -126,7 +126,7 @@ namespace eval lg2::test {
         set text [porcelain_exec init .]
         append text \n---\n
         append text [git_exec $workdir status]
-    } -result "^Initialized git repository at.*init-0.*---.*On branch master.*No commits yet.*nothing to commit" -match regexp
+    } -result "^Initialized git repository at.*init-0.*---.*On branch (main|master).*No commits yet.*nothing to commit" -match regexp
 
     test init-1 {init git repository in specified directory} -setup {
         set workdir [makeDirectory init-1]
@@ -134,7 +134,7 @@ namespace eval lg2::test {
         set text [porcelain_exec init $workdir]
         append text \n---\n
         append text [git_exec $workdir status]
-    } -result "^Initialized git repository at.*init-1.*---.*On branch master.*No commits yet.*nothing to commit" -match regexp
+    } -result "^Initialized git repository at.*init-1.*---.*On branch (main|master).*No commits yet.*nothing to commit" -match regexp
 
     test init-bare-0 {init bare git repository} -setup {
         set workdir [makeDirectory init-bare-0]
@@ -154,7 +154,7 @@ namespace eval lg2::test {
         set text [porcelain_exec init --initial-commit $workdir]
         append text \n---\n
         append text [git_exec $workdir status]
-    } -result "^Initialized git repository at.*init-initial-commit-0.*Initial commit:.*---.*On branch master.*nothing to commit" -match regexp
+    } -result "^Initialized git repository at.*init-initial-commit-0.*Initial commit:.*---.*On branch (main|master).*nothing to commit" -match regexp
 
     test init-quiet-0 {init git repository in current directory} -setup {
         set origdir [pwd]
@@ -166,7 +166,7 @@ namespace eval lg2::test {
         set text [porcelain_exec init --quiet .]
         append text \n---\n
         append text [git_exec $workdir status]
-    } -result "^\\s*---.*On branch master.*No commits yet.*nothing to commit" -match regexp
+    } -result "^\\s*---.*On branch (main|master).*No commits yet.*nothing to commit" -match regexp
 
     ### add
 
@@ -182,7 +182,7 @@ namespace eval lg2::test {
     } -body {
         makeFile "Test $testid" $testid.txt $workdir
         porcelain_exec_with_status add $testid.txt
-    } -result "^\\s*---\n\\s*On branch master.*Changes to be committed:.*new file:\\s*add-0.txt" -match regexp
+    } -result "^\\s*---\n\\s*On branch (main|master).*Changes to be committed:.*new file:\\s*add-0.txt" -match regexp
 
     test add-1 "Add a directory" -setup {
         set testid add-1
@@ -195,7 +195,7 @@ namespace eval lg2::test {
         makeFile "Test $testid - 1" 1.txt sub
         makeFile "Test $testid - 2" 2.txt sub
         porcelain_exec_with_status add sub
-    } -result "^\\s*---\n\\s*On branch master.*Changes to be committed:.*new file:\\s*sub/1.txt\\s+new file:\\s*sub/2.txt" -match regexp
+    } -result "^\\s*---\n\\s*On branch (main|master).*Changes to be committed:.*new file:\\s*sub/1.txt\\s+new file:\\s*sub/2.txt" -match regexp
 
     test add-verbose-0 "Add a file" -setup {
         set testid add-verbose-0
@@ -206,7 +206,7 @@ namespace eval lg2::test {
     } -body {
         makeFile "Test $testid" $testid.txt $workdir
         porcelain_exec_with_status add --verbose $testid.txt
-    } -result "^add 'add-verbose-0.txt'\\s*---\n\\s*On branch master.*Changes to be committed:.*new file:\\s*add-verbose-0.txt" -match regexp
+    } -result "^add 'add-verbose-0.txt'\\s*---\n\\s*On branch (main|master).*Changes to be committed:.*new file:\\s*add-verbose-0.txt" -match regexp
 
     test add-dry-run-0 "Add a file - dry run" -setup {
         set testid add-dry-run-0
@@ -217,7 +217,7 @@ namespace eval lg2::test {
     } -body {
         makeFile "Test $testid" $testid.txt $workdir
         porcelain_exec_with_status add --dry-run $testid.txt
-    } -result "^add 'add-dry-run-0.txt'\\s*---\n\\s*On branch master.*Untracked files:.*add-dry-run-0.txt.*nothing added to commit" -match regexp
+    } -result "^add 'add-dry-run-0.txt'\\s*---\n\\s*On branch (main|master).*Untracked files:.*add-dry-run-0.txt.*nothing added to commit" -match regexp
 
     test add-git-dir-work-tree-0 "Add a file using --git-dir and --work-tree" -setup {
         set testid add-0
@@ -230,7 +230,7 @@ namespace eval lg2::test {
         append output [git_exec $workdir status]
         popd
         set output
-    } -result "^\\s*---\n\\s*On branch master.*Changes to be committed:.*new file:\\s*add-0.txt" -match regexp
+    } -result "^\\s*---\n\\s*On branch (main|master).*Changes to be committed:.*new file:\\s*add-0.txt" -match regexp
 
     ### commit
 
@@ -656,7 +656,7 @@ namespace eval lg2::test {
     test_version config
 
     test_with_git config-list-0 config --list
-    test_with_git config-get-0 config color.diff
+    test_with_git config-get-0 config core.autocrlf
     test config-set-0 "config set" -setup {
         set workdir [setup_rw_repo config-set-0]
         pushd $workdir
